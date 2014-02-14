@@ -5,7 +5,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.ArrayList;
-import edu.wit.comp310.TreeDemo.Node;
 
 
 /**
@@ -34,13 +33,23 @@ public class MyLinkedList<ValueType> implements List<ValueType> {
 		Node<T> next;
 	}
 	public Node<ValueType> getNodeAt(int arg0){
-		if (arg0<0 || arg0 > size()){
+		//System.out.println("From getNodeAt: arg0="+ arg0 + " size=" + size());
+		if (arg0<0 || arg0>size()){
 			throw new IndexOutOfBoundsException("Index out of bounds");
 		}
 		int i = 0;
-		Node<ValueType> current;
-		for( current = first; current.next != null && i < arg0-1; current = current.next, i++){
+		Node<ValueType> current = first;
+		if(arg0==1){
+			i++;
+			//System.out.println("from getNodeAt: i = " + i + "\targ0 = " + arg0 + "\targ0==1");
+			return first.next;
+		} else {
+			while(i<arg0){
+				i++;
+				current=current.next;
+			}
 		}
+		//System.out.println("from getNodeAt: i = " + i + "\targ0 = " + arg0);
 		return current;
 	}
 	
@@ -51,16 +60,15 @@ public class MyLinkedList<ValueType> implements List<ValueType> {
 			newNode.data = arg0;
 			first = newNode;
 			last = newNode;
-			numOfEntries++;
-			return true;
 		}else{
 			 Node<ValueType> newNode = new Node<ValueType>();
+			 newNode.data = arg0;
 			 last.next = newNode;
 			 last = newNode;
-			 newNode.data = arg0;
-			 numOfEntries++;
-			 return true;
 		}
+		numOfEntries++;
+		//System.out.println("from add: " + size());
+		return true;
 	}
 
 	@Override
@@ -69,26 +77,36 @@ public class MyLinkedList<ValueType> implements List<ValueType> {
 		if (arg0<0 || arg0 > size()){
 			throw new IndexOutOfBoundsException("Index out of bounds");
 		}
-		Node<ValueType> current = new Node<ValueType>();
-		int i=0;
-		for( current = first; current.next != null && i < arg0-1; current = current.next, i++){
-		}
 		Node<ValueType> newNode = new Node<ValueType>();
-		newNode.next = current.next;
-		current = newNode;
 		newNode.data = arg1;
+		Node<ValueType> temp = new Node<ValueType>();
+		Node<ValueType> current = first;
+		if(arg0-1<0){
+			first = newNode;
+			newNode.next = current;
+		} else {
+			current = getNodeAt(arg0-1);
+			temp = current.next;
+			current.next = newNode;
+			newNode.next = temp;
+		}
 		numOfEntries++;
 	}
 
 	@Override
 	public boolean addAll(Collection<? extends ValueType> arg0) {
-		// TODO Auto-generated method stub
+		for (ValueType arg : arg0){
+			add(arg);
+			numOfEntries++;
+		}
 		return false;
 	}
 
 	@Override
 	public boolean addAll(int arg0, Collection<? extends ValueType> arg1) {
-		// TODO Auto-generated method stub
+		if(arg0 < 0){
+			throw new IndexOutOfBoundsException();
+		}
 		return false;
 	}
 	@Override
@@ -100,19 +118,25 @@ public class MyLinkedList<ValueType> implements List<ValueType> {
 
 	@Override
 	public boolean contains(Object arg0) {
-		Node<ValueType> current;
-		for( current = first; current.next != null; current = current.next){
-			if(current.data == arg0){
+		Node<ValueType> current = first;
+		for(;; current = current.next){
+			if((arg0).equals(current.data)){
 				return true;
 			}
+			if(current.next == null){
+				return false;
+			}
 		}
-		return false;
 	}
 
 	@Override
 	public boolean containsAll(Collection<?> arg0) {
-		// TODO Auto-generated method stub
-		return false;
+		for (Object arg : arg0){
+			if(!contains(arg)){
+				return false;
+			}
+		}
+		return true;
 	}
 
 	@Override
@@ -121,13 +145,13 @@ public class MyLinkedList<ValueType> implements List<ValueType> {
 			throw new IndexOutOfBoundsException("Index out of bounds");
 		}
 		
-		return (ValueType) getNodeAt(arg0).data;
+		return getNodeAt(arg0).data;
 	}
 	@Override
 	public int indexOf(Object arg0) {
 		Node<ValueType> current = first;
 		int pos = 0;
-		for(; current.next != null || pos<=numOfEntries; current = current.next, pos++){
+		for(; pos<numOfEntries; current = current.next, pos++){
 			if(current.data.equals(arg0)){
 				return pos;
 			}
@@ -139,8 +163,9 @@ public class MyLinkedList<ValueType> implements List<ValueType> {
 	public boolean isEmpty() {
 		if(numOfEntries==0){
 			return true;
+		} else {
+			return false;
 		}
-		return false;
 	}
 
 	@Override
@@ -149,7 +174,7 @@ public class MyLinkedList<ValueType> implements List<ValueType> {
 			Node<ValueType> current = first;
 			@Override
 			public boolean hasNext() {
-				return current.next != null;
+				return current != null;
 			}
 
 			@Override
@@ -196,33 +221,91 @@ public class MyLinkedList<ValueType> implements List<ValueType> {
 
 	@Override
 	public boolean remove(Object arg0) {
+		if(indexOf(arg0) == -1){
+			new IndexOutOfBoundsException();
+		}
 		int pos = indexOf(arg0);
 		if(pos<0){
 			return false;
+		} else if(pos==0){
+			first = first.next;
+			numOfEntries--;
+			return true;
+		} else if(pos>0){
+			//System.out.println("from remove: pos > 0, " + pos);
+			Node<ValueType> before = getNodeAt(pos-1);
+			//System.out.println("removing: " + before.next.data);
+			before.next = before.next.next;
+			numOfEntries--;
+			return true;
+		} else {
+			//System.out.println("???");
+			return false;
 		}
-		Node<ValueType> current = getNodeAt(pos);
-		Node<ValueType> before = getNodeAt(pos-1);
-		before.next = current.next;
-		current = null;
-		numOfEntries--;
-		return true;
+		
+		
+		
 	}
 
 	@Override
 	public ValueType remove(int arg0) {
-		// TODO Auto-generated method stub
-		return null;
+		
+		if(arg0 < 0 || arg0>size()){
+			new IndexOutOfBoundsException();
+		}
+		Node<ValueType> before = getNodeAt(arg0-1);
+		before.next = before.next.next;
+		
+		//Node<ValueType> before = first;
+		/*ValueType prevData = null;
+		if(arg0<0){
+			//System.out.println("arg0<0");
+			throw new IndexOutOfBoundsException();
+		} else
+		if(arg0==0){
+			//System.out.println("arg0==0");
+			prevData = first.data;
+			first = first.next;
+			before = null;
+			numOfEntries--;
+			return prevData;
+		} else
+		if (arg0>0){
+			//System.out.println("arg0>0");
+			before = getNodeAt(arg0-1);
+			prevData = before.next.data;
+			before = (before.next.next);
+			numOfEntries--;
+			return prevData;
+		} else {*/
+			return null;
+		//}
 	}
 
 	@Override
 	public boolean removeAll(Collection<?> arg0) {
-		// TODO Auto-generated method stub
+			for (Object item : arg0){
+				while(contains(item)){
+					remove(item);
+				}
+		}
 		return false;
 	}
 
 	@Override
 	public boolean retainAll(Collection<?> arg0) {
-		// TODO Auto-generated method stub
+		for (ValueType data : this){
+			boolean found = false;
+			for ( Object arg : arg0){
+				if((data.equals(arg))){
+					found = true;
+				}
+			}
+			if(!found){
+				remove(data);
+			}
+		}
+
 		return false;
 	}
 
@@ -231,10 +314,7 @@ public class MyLinkedList<ValueType> implements List<ValueType> {
 		if (arg0<0 || arg0 > size()){
 			throw new IndexOutOfBoundsException("Index out of bounds");
 		}
-		int i = 0;
-		Node<ValueType> current;
-		for( current = first; current.next != null && i < arg0-1; current = current.next, i++){
-		}
+		Node<ValueType> current = getNodeAt(arg0);
 		ValueType prevData = current.data;
 		current.data = arg1;
 		return prevData;
@@ -247,19 +327,36 @@ public class MyLinkedList<ValueType> implements List<ValueType> {
 
 	@Override
 	public List<ValueType> subList(int arg0, int arg1) {
-		// TODO Auto-generated method stub
-		return null;
+		Node<ValueType> current = getNodeAt(arg0);
+		List<ValueType> portion = new ArrayList<ValueType>();
+		int i = 0;
+		for(; current.next != null && i < (arg1-arg0); current = current.next, i++){
+			portion.add(current.data);
+		}
+		return portion;
 	}
 
 	@Override
 	public Object[] toArray() {
-		// TODO Auto-generated method stub
-		return null;
+		Object[] arr = new Object[numOfEntries];
+		int i = 0;
+		for(ValueType obj : this)
+		{
+			arr[i] = obj;
+			i++;
+		}
+		return arr;
 	}
 
 	@Override
 	public <T> T[] toArray(T[] arg0) {
-		// TODO Auto-generated method stub
-		return null;
+		String[] arr = new String[numOfEntries];
+		int i = 0;
+		for(ValueType obj : this)
+		{
+			arr[i] = (String) obj;
+			i++;
+		}
+		return (T[]) arr;
 	}
 }
